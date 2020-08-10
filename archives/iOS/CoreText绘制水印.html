@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CoreText绘制水印</title>
+    <style type="text/css" media="all">
+      body {
+        margin: 0;
+        font-family: "Helvetica Neue", Helvetica, Arial, "Hiragino Sans GB", sans-serif;
+        font-size: 14px;
+        line-height: 20px;
+        color: #777;
+        background-color: white;
+      }
+      .container {
+        width: 700px;
+        margin-right: auto;
+        margin-left: auto;
+      }
+
+      .post {
+        font-family: Georgia, "Times New Roman", Times, "SimSun", serif;
+        position: relative;
+        padding: 70px;
+        bottom: 0;
+        overflow-y: auto;
+        font-size: 16px;
+        font-weight: normal;
+        line-height: 25px;
+        color: #515151;
+      }
+
+      .post h1{
+        font-size: 50px;
+        font-weight: 500;
+        line-height: 60px;
+        margin-bottom: 40px;
+        color: inherit;
+      }
+
+      .post p {
+        margin: 0 0 35px 0;
+      }
+
+      .post img {
+        border: 1px solid #D9D9D9;
+      }
+
+      .post a {
+        color: #28A1C5;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <div class="post">
+        <h1 class="title">CoreText绘制水印</h1>
+        <div class="show-content">
+          <p>近期有同事拿别人手机打卡记录申述考勤异常，鉴于此，需要在考勤记录添加工号全图倾斜水印来防伪，在网上找了一些博客，都是使用老的方法直接在图片上绘制水印，都能实现需要的效果，但是其中使用的方法在iOS7已经废弃掉了，apple给的建议是使用CoreText来代替。（直接在图片绘制水印参见blog：http://blog.csdn.net/jiadabin/article/details/51669497）。接下来谈谈使用CoreText绘制水印。</p><p>1、创建一个继承自UIView的类，重写drawRect</p><p>- (void)drawRect:(CGRect)rect {<br></p><p>// Drawing code</p><p>[super drawRect:rect];</p><p>self.backgroundColor = [UIColor lightGrayColor];</p><p>// 得到当前用于绘制画布的上下文，用于后续将内容绘制在画布上</p><p>CGContextRef context = UIGraphicsGetCurrentContext();</p><p>//翻转当前的坐标系（因为对于底层绘制引擎来说，屏幕左下角为（0，0））</p><p>CGContextSetTextMatrix(context, CGAffineTransformIdentity);</p><p>CGContextTranslateCTM(context, 0, self.bounds.size.height);</p><p>CGContextScaleCTM(context, 1.0, -1.0);</p><p>//绘制背景图片</p><p>CGContextDrawImage(context, self.bounds, self.image.CGImage);</p><p>//创建绘制文字</p><p>NSMutableAttributedString *attrString = [[NSMutableAttributedString alloc] initWithString:self.waterText];</p><p>[attrString addAttribute:(id)kCTForegroundColorAttributeName value:[UIColor colorWithRed:31/255.0 green:233/255.0 blue:189/255.0 alpha:0.3] range:NSMakeRange(0, attrString.length)];</p><p>CGFloat fontSize = 18;</p><p>CTFontRef fontRef = CTFontCreateWithName((CFStringRef)@"ArialMT", fontSize, NULL);</p><p>[attrString addAttribute:(id)kCTFontAttributeName value:(__bridge id)fontRef range:NSMakeRange(0, attrString.length)];</p><p>CFRelease(fontRef);</p><p>//旋转画布</p><p>CGContextRotateCTM(context, 30*M_PI/180);</p><p>//根据NSAttributedString创建CTFramesetterRef</p><p>CTFramesetterRef frameSetter = CTFramesetterCreateWithAttributedString((CFAttributedStringRef)attrString);</p><p>//获取绘制文字的尺寸</p><p>CGSize size = [attrString size];</p><p>//画布的长宽</p><p>int w = self.bounds.size.width;</p><p>int h = self.bounds.size.height;</p><p>//绘制文本行和列</p><p>int row = w/size.width;</p><p>int col = h/size.height;</p><p>//整个画布绘制文本</p><p>for (int i = 0; i&lt;=row; i++) {;</p><p>for (int j = 0; j&lt;=col; j++) {</p><p>//创建绘制区域CGPathRef</p><p>CGMutablePathRef path = CGPathCreateMutable();</p><p>CGPathAddRect(path, NULL, CGRectMake((size.width + 25) * i, j *(size.height + 20), size.width, size.height));</p><p>//根据CTFramesetterRef和CGPathRef创建CTFrame；</p><p>CTFrameRef frame = CTFramesetterCreateFrame(frameSetter, CFRangeMake(0, [attrString length]), path, NULL);</p><p>//绘制</p><p>CTFrameDraw(frame, context);</p><p>CFRelease(frame);</p><p>CFRelease(path);</p><p>}</p><p>}</p><p>CFRelease(frameSetter);</p><p>}</p><p>2、截取绘制View界面生成图片。</p><p>WaterLogoView *waterImageView = [[WaterLogoView alloc] initWithImage:[UIImage imageNamed:@"bg_dark"] waterText:@"123456"];<br></p><p>UIGraphicsBeginImageContext(CGSizeMake(kScreenWidth, kScreenHeight));</p><p>[waterImageView.layer renderInContext:UIGraphicsGetCurrentContext()];</p><p>UIImage *viewImage = UIGraphicsGetImageFromCurrentImageContext();</p><p>UIGraphicsEndImageContext();<br></p><p>3、初始化UIImageView，使用上述生成的图片。</p><p>UIImageView *bgIV = [[UIImageView alloc] initWithFrame:self.view.bounds];<br></p><p>[bgIV setImage:viewImage];<br></p><p>4、把bgIV添加到当前视图View上。</p><p>[self.view addSubview:bgIV];<br></p>
+        </div>
+      </div>
+    </div>
+  </body>
+</html>

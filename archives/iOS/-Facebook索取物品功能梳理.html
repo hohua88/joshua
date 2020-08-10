@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title> Facebook索取物品功能梳理</title>
+    <style type="text/css" media="all">
+      body {
+        margin: 0;
+        font-family: "Helvetica Neue", Helvetica, Arial, "Hiragino Sans GB", sans-serif;
+        font-size: 14px;
+        line-height: 20px;
+        color: #777;
+        background-color: white;
+      }
+      .container {
+        width: 700px;
+        margin-right: auto;
+        margin-left: auto;
+      }
+
+      .post {
+        font-family: Georgia, "Times New Roman", Times, "SimSun", serif;
+        position: relative;
+        padding: 70px;
+        bottom: 0;
+        overflow-y: auto;
+        font-size: 16px;
+        font-weight: normal;
+        line-height: 25px;
+        color: #515151;
+      }
+
+      .post h1{
+        font-size: 50px;
+        font-weight: 500;
+        line-height: 60px;
+        margin-bottom: 40px;
+        color: inherit;
+      }
+
+      .post p {
+        margin: 0 0 35px 0;
+      }
+
+      .post img {
+        border: 1px solid #D9D9D9;
+      }
+
+      .post a {
+        color: #28A1C5;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <div class="post">
+        <h1 class="title"> Facebook索取物品功能梳理</h1>
+        <div class="show-content">
+          <p>关于博客，一直觉得自己文笔不好，不适合写一些东西。最近面试总会有人问你有没有自己的技术博客抑或开发过程中遇到的问题为什么不整理出来。今天试着写一下Facebook关于索取这块功能的梳理。下面进入正文：<br></p><p>Facebook官方接入文档：https://developers.facebook.com/docs/games/requests/v2.3</p><p>1，关于索取的流程描述：索取界面(可以是按钮或者FB好友列表界面) －&gt; 索取请求</p><p>获取请求－&gt; 实现请求界面－&gt; 处理请求信息(接受／取消) －&gt; 删除请求</p><p>2.索取／发送请求实现：</p><p>#pragma mark 索取/赠送物品接口 function</p><p>- (void)FbGameRequestType:(FBSDKGameRequestActionType)actionType title:(NSString *)title objectID:(NSString *)objectID mesage:(NSString *)message to:(NSArray *)friendsID extraData:(NSString *)extraData handle:(R2SDKHandler)handle{</p><p>_handle = [handle copy];</p><p>FBSDKGameRequestContent *content = [[FBSDKGameRequestContent alloc] init];</p><p>content.actionType = actionType;</p><p>content.message = message;</p><p>content.title = title;</p><p>content.objectID = objectID;</p><p>if (friendsID) {</p><p>content.to = friendsID;</p><p>}</p><p>content.data = extraData;</p><p>FBSDKGameRequestDialog *dialog = [[FBSDKGameRequestDialog alloc] init];</p><p>dialog.content = content;</p><p>[content release];</p><p>dialog.delegate = self;</p><p>[dialog show];</p><p>[dialog release];</p><p>}</p><p>参数说明：</p><p>actionType：请求类型（发送／索取）对应FB的FBSDKGameRequestActionTypeSend、FBSDKGameRequestActionTypeAskFor</p><p>message：请求内容</p><p>title：请求标题</p><p>objectID：请求物品的objectID</p><p>friendsID：好友的FacebookID（如果为空，会出现选择好友界面）</p><p>extraData：自定义内容，可用于区分请求类型</p><p>返回说明：</p><p>results : {</p><p>request =101166043550679;</p><p>"to[0]" = 1556010831327419;</p><p>}</p><p>3、获取请求</p><p>#pragma mark 获取请求信息 function</p><p>- (NSArray *)notificationGet{</p><p>if ([FBSDKAccessToken currentAccessToken]) {</p><p>NSString *urlStr = [NSString stringWithFormat:@"https://graph.facebook.com/me/apprequests?access_token=%@",[FBSDKAccessToken currentAccessToken].tokenString];</p><p>NSURL *url  =[NSURL URLWithString:urlStr];</p><p>NSMutableURLRequest *request = [NSMutableURLRequest requestWithURL:url cachePolicy:NSURLRequestReloadIgnoringCacheData timeoutInterval:20.0];</p><p>[request setHTTPMethod:@"GET"];</p><p>NSData *receiveData = [NSURLConnection sendSynchronousRequest:request returningResponse:nil error:nil];</p><p>if (receiveData) {</p><p>NSDictionary *jsonDic = [NSJSONSerialization JSONObjectWithData:receiveData options:NSJSONReadingMutableLeaves error:nil];</p><p>NSArray *requestArray = [jsonDic objectForKey:@"data"];</p><p>return requestArray;</p><p>}else{</p><p>return nil;</p><p>}</p><p>}else{</p><p>return nil;</p><p>}</p><p>}</p><p>返回说明：</p><p>{</p><p>application=         {</p><p>id =816966971726400;</p><p>name =R2FunGames;</p><p>namespace = "lx_rtwogames";</p><p>};</p><p>"created_time" = "2015-04-01T09:05:14+0000";</p><p>from =         {</p><p>id =365056257014686;</p><p>name ="David Lu";</p><p>};</p><p>id ="1392376167750176_360466704143920";</p><p>message ="David is testing";</p><p>to =         {</p><p>id =360466704143920;</p><p>name ="Hohua  Huang";</p><p>};</p><p>},...</p><p>}</p><p>注释：获取请求必须在FB登陆成功的状态下</p><p>4、删除请求</p><p>在接受请求后，调用发送物品请求接口，发送物品。处理成功后需要删除该请求。(不接受直接删除)</p><p>参见如下代码：（）</p><p>#pragma mark 删除处理完的请求 function</p><p>- (NSDictionary *)notificationClear:(NSString *)requestid{</p><p>if ([FBSDKAccessToken currentAccessToken]) {</p><p>NSString *urlStr = [NSString stringWithFormat:@"https://graph.facebook.com/%@?access_token=%@",requestid,[FBSDKAccessToken currentAccessToken].tokenString];</p><p>NSURL *url =[NSURL URLWithString:urlStr];</p><p>NSMutableURLRequest *request = [NSMutableURLRequest requestWithURL:url];</p><p>[request setHTTPMethod:@"DELETE"];</p><p>NSData *receiveData = [NSURLConnection sendSynchronousRequest:request returningResponse:nil error:nil];</p><p>NSDictionary *json = [NSJSONSerialization JSONObjectWithData:receiveData options:NSJSONReadingMutableLeaves error:nil];</p><p>return json;</p><p>}</p><p>return nil;</p><p>}</p><p>5、索取物品的配置</p><p>参见：https://developers.facebook.com/docs/games/requests/v2.3</p>
+        </div>
+      </div>
+    </div>
+  </body>
+</html>

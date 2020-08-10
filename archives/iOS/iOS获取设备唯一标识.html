@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>iOS获取设备唯一标识</title>
+    <style type="text/css" media="all">
+      body {
+        margin: 0;
+        font-family: "Helvetica Neue", Helvetica, Arial, "Hiragino Sans GB", sans-serif;
+        font-size: 14px;
+        line-height: 20px;
+        color: #777;
+        background-color: white;
+      }
+      .container {
+        width: 700px;
+        margin-right: auto;
+        margin-left: auto;
+      }
+
+      .post {
+        font-family: Georgia, "Times New Roman", Times, "SimSun", serif;
+        position: relative;
+        padding: 70px;
+        bottom: 0;
+        overflow-y: auto;
+        font-size: 16px;
+        font-weight: normal;
+        line-height: 25px;
+        color: #515151;
+      }
+
+      .post h1{
+        font-size: 50px;
+        font-weight: 500;
+        line-height: 60px;
+        margin-bottom: 40px;
+        color: inherit;
+      }
+
+      .post p {
+        margin: 0 0 35px 0;
+      }
+
+      .post img {
+        border: 1px solid #D9D9D9;
+      }
+
+      .post a {
+        color: #28A1C5;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <div class="post">
+        <h1 class="title">iOS获取设备唯一标识</h1>
+        <div class="show-content">
+          <p>        最近公司出现代打卡被举报的情况发生（当然一直存在这种现象、只不过人事没发现也就没事情），结果调查是窝案，好几个同事相互代打卡。为了杜绝此类事情的发生。人事部门提出需要账号绑定设备来解决。</p><p>       我之前在游戏公司处理此类问题的经验是直接获取IDFV（identifierForVendor），然后保存到keychain。这样来获取设备的唯一标识。有同事提出keychain可能在iOS10.3后不能使用，并且网络上也充斥这种说法：<a href="http://blog.sina.com.cn/s/blog_161a027220102x205.html" target="_blank">iOS10.3 keychain重大改变</a>。并且在10.3系统中到底能不能用也没有人说明（很多人不负责任，抛出问题却不解答）。借此机会我刚好深入调研一下具体情况。</p><p>     首先我上官网获取keychain的代码来调试。详情请移步：<a href="https://developer.apple.com/library/content/documentation/Security/Conceptual/keychainServConcepts/iPhoneTasks/iPhoneTasks.html" target="_blank">keychain介绍</a>。里面有详细的说明。在获取到keychain最新代码后，我做了如下实验：</p><blockquote>
+<p>NSString *uuid = [[[UIDevice currentDevice] identifierForVendor] UUIDString];<br></p>
+<p>KeychainWrapper *wrapper = [[KeychainWrapper alloc] init];</p>
+<p>if([wrapper myObjectForKey:(__bridge id)(kSecValueData)]){</p>
+<p>NSLog(@"uuid : %@",[wrapper myObjectForKey:(__bridge id)(kSecValueData)]);</p>
+<p>}</p>
+<p>else{</p>
+<p>[wrapper mySetObject:uuid forKey:(__bridge id)(kSecValueData)];</p>
+<p>}</p>
+</blockquote><p>结果发现是可以使用的，一直是：3BED0EB3-3860-4D47-A3F6-6CC81394AFFE。猜想这个问题应该是在beta版本中出现了，所有就出现上述的文章，结果在iOS10.3系统发布后就没人验证这个问题了。</p><p>        当然还没有结束，在我的印象中identifierForVendor是这样的<a href="https://developer.apple.com/reference/uikit/uidevice/1620059-identifierforvendor?language=objc" target="_blank">官网解释</a>：</p><blockquote><p>@property(nullable, nonatomic,readonly,strong) NSUUID      *identifierForVendor NS_AVAILABLE_IOS(6_0);      // a UUID that may be used to uniquely identify the device, same across apps from a single vendor.<br></p></blockquote><p>Vindor标示符，适用于对内：例如分析用户在应用内的行为等。<br></p><p>描述：这是一个包含文字和数字的字符串，是提供给应用供应商关于设备的唯一性标识，是只读的。</p><p>对于来自相同的供应商的运行在同一设备上的多种应用来说，这个属性的值是相同的。但是同一设备上不同供应商提供的应用获取到的这个属性值是不同的，而对不同设备上的多种应用来说无论是否是同一家供应商这个值也是不同的。通常，供应商身份是由苹果商店中提供的数据决定的。<b>如果应用不是通过苹果商店下载安装的（比如企业级应用或者还在开发中的应用），供应商的身份标识则是基于应用的bundle ID计算出来的。bundle ID 以逆向DNS格式来表示。</b></p><p>在iOS6中，bundle ID的前两部分用来产生供应商ID。如果bundle ID只有一部分，就会使用整个的bundle ID。</p><p>在iOS7中，除了最后一部分之外所有bundle ID中所有的部分都被用来产生供应商ID。如果bundle ID只有一部分，整个bundle ID会被使用。</p><p>表一列举了一些bundle ID以及系统使用bundle ID的哪些部分计算供应商ID</p><p>这里写图片描述</p><p>例如：com.example.app1 和 com.example.app2 会有相同的供应商ID.</p><p>如果这个值为空，等一会再次获取这个值。这种情况一般发生在设备已经重启了但是用户还没有解锁设备的时候。</p><p><b>在应用（或者来自同一供应商的不同应用）安装在设备上的时候，这个属性中的值会一直保持不变。但是当用户从设备中删除了那个供应商提供的所有应用并随后又重新安装，这个值就会发生变化。当使用 Xcode 安装测试包或者在设备上安装ad-hoc发布包的时候，这个值也会发生变化</b>。因此，不管你的应用在哪儿使用了这个值，你都要很好地处理这个标示符发生变化的情况。</p><p>当然上面最后的表述有点含混，既然这样，本着负责的态度我想验证这个说法，我就在enterprise和dev下删除应用重装IDFV会不会变化？结果合乎我的猜想，重装后获取的值是唯一的。那在App Store下载安装或adhoc下，结果还是这样吗？我让我同事在公司证书下测试，结果还是没变。所以现在的情况是无论在何种模式下，IDFV都不会变化。官方文档对此的描述并不准确。希望大家分享验证的结果。</p>
+        </div>
+      </div>
+    </div>
+  </body>
+</html>
