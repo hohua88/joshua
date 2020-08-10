@@ -1,0 +1,139 @@
+<html>
+  <head>
+	  <meta http-equiv="content-type" content="text/html; charset=utf-8" />
+    <title>i5ting_ztree_toc:shell常用代码</title>
+		<link href="toc/style/github-bf51422f4bb36427d391e4b75a1daa083c2d840e.css" media="all" rel="stylesheet" type="text/css"/>
+		<link href="toc/style/github2-d731afd4f624c99a4b19ad69f3083cd6d02b81d5.css" media="all" rel="stylesheet" type="text/css"/>
+		<link href="toc/css/zTreeStyle/zTreeStyle.css" media="all" rel="stylesheet" type="text/css"/>
+	  <style>
+		pre {
+		    counter-reset: line-numbering;
+		    border: solid 1px #d9d9d9;
+		    border-radius: 0;
+		    background: #fff;
+		    padding: 0;
+		    line-height: 23px;
+		    margin-bottom: 30px;
+		    white-space: pre;
+		    overflow-x: auto;
+		    word-break: inherit;
+		    word-wrap: inherit;
+		}
+
+		pre a::before {
+		  content: counter(line-numbering);
+		  counter-increment: line-numbering;
+		  padding-right: 1em; /* space after numbers */
+		  width: 25px;
+		  text-align: right;
+		  opacity: 0.7;
+		  display: inline-block;
+		  color: #aaa;
+		  background: #eee;
+		  margin-right: 16px;
+		  padding: 2px 10px;
+		  font-size: 13px;
+		  -webkit-touch-callout: none;
+		  -webkit-user-select: none;
+		  -khtml-user-select: none;
+		  -moz-user-select: none;
+		  -ms-user-select: none;
+		  user-select: none;
+		}
+
+		pre a:first-of-type::before {
+		  padding-top: 10px;
+		}
+
+		pre a:last-of-type::before {
+		  padding-bottom: 10px;
+		}
+
+		pre a:only-of-type::before {
+		  padding: 10px;
+		}
+
+		.highlight { background-color: #ffffcc } /* RIGHT */
+		</style>
+  </head>
+  <body>
+	  <div>
+				<div style='width:25%;'>
+						<ul id="tree" class="ztree" style='width:100%'>
+
+						</ul>
+				</div>
+        <div id='readme' style='width:70%;margin-left:20%;'>
+          	<article class='markdown-body'>
+            	<p>1、免密执行安装插件</p>
+<pre><code>echo [password] | sudo -S gem install plist
+</code></pre><p>2、为空判断</p>
+<pre><code>if [ -n &quot;$x&quot; ] ; then
+   command
+else
+   exit 1
+fi
+</code></pre><p>3、遍历文件获取文件名
+文件名称不能带有空格，有空格会获取空格后的名字，现已处理支持带空格的情况。</p>
+<pre><code>for element in `ls &quot;$1&quot; | tr &quot; &quot; &quot;\?&quot;`
+do
+    element=`tr &quot;\?&quot; &quot; &quot; &lt;&lt;&lt;$element`
+    dir_or_file=&quot;$1&quot;/&quot;$element&quot;
+    if [ -d &quot;$dir_or_file&quot; ];then
+        var=$( find &quot;$dir_or_file&quot; -name &#39;*.xcodeproj&#39; )
+        var1=${var##*/}
+        if [ -n &quot;$var1&quot; ];then
+            podStr=&quot;Pods&quot;
+           if [[ $var1 == *$podStr* ]];then
+            echo &quot;Pods.xcodeproj&quot;
+           else
+            #截取.之前的所有字符串
+            appname=${var1%.*}
+            echo $appname
+           fi
+        fi
+
+    fi
+done
+</code></pre><p>带有空格的获取方式，🌰是获取xxx.app这个名字，改签时要用。</p>
+<pre><code>var=$( find &quot;$path/ios_resign/Payload&quot; -name &#39;*.app&#39; )
+app_name=${var##*/}
+</code></pre><p>4、打包ipa脚本</p>
+<pre><code>xcodebuild clean -workspace &quot;${app_name}.xcworkspace&quot; -scheme &quot;${app_name}&quot; -configuration enterprise
+xcodebuild archive -workspace &quot;${app_name}.xcworkspace&quot; -scheme &quot;${app_name}&quot; -archivePath &quot;${app_name}.xcarchive&quot; -quiet
+xcodebuild -exportArchive -archivePath &quot;${app_name}.xcarchive&quot; -exportPath ipa -exportOptionsPlist &quot;Vigame/ExportOptions.plist&quot;
+
+</code></pre><p>5、上传fir.im</p>
+<pre><code>fir publish file -T &quot;${token}&quot; -Q
+</code></pre><p>6、find命令</p>
+<pre><code>keyfile=Images.xcassets
+x=$(find filepath -name $keyfile)
+</code></pre><p>7、添加证书</p>
+<pre><code>#添加证书和描述文件
+security import xx.p12 -k ~/Library/Keychains/login.keychain-db -P [password] -A
+open xxx.mobileprovision
+</code></pre><p>8、shell传递参数
+如果参数超过10个，后续的参数需要加{}</p>
+<pre><code>${10}
+</code></pre>
+          	</article>
+        </div>
+		</div>
+  </body>
+</html>
+<script type="text/javascript" src="toc/js/jquery-1.4.4.min.js"></script>
+<script type="text/javascript" src="toc/js/jquery.ztree.all-3.5.min.js"></script>
+<script type="text/javascript" src="toc/js/ztree_toc.js"></script>
+<script type="text/javascript" src="toc_conf.js"></script>
+
+<SCRIPT type="text/javascript" >
+<!--
+$(document).ready(function(){
+    var css_conf = eval(markdown_panel_style);
+    $('#readme').css(css_conf)
+    
+    var conf = eval(jquery_ztree_toc_opts);
+		$('#tree').ztree_toc(conf);
+});
+//-->
+</SCRIPT>

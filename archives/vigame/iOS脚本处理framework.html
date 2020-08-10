@@ -1,0 +1,176 @@
+<html>
+  <head>
+	  <meta http-equiv="content-type" content="text/html; charset=utf-8" />
+    <title>i5ting_ztree_toc:iOS脚本处理framework</title>
+		<link href="toc/style/github-bf51422f4bb36427d391e4b75a1daa083c2d840e.css" media="all" rel="stylesheet" type="text/css"/>
+		<link href="toc/style/github2-d731afd4f624c99a4b19ad69f3083cd6d02b81d5.css" media="all" rel="stylesheet" type="text/css"/>
+		<link href="toc/css/zTreeStyle/zTreeStyle.css" media="all" rel="stylesheet" type="text/css"/>
+	  <style>
+		pre {
+		    counter-reset: line-numbering;
+		    border: solid 1px #d9d9d9;
+		    border-radius: 0;
+		    background: #fff;
+		    padding: 0;
+		    line-height: 23px;
+		    margin-bottom: 30px;
+		    white-space: pre;
+		    overflow-x: auto;
+		    word-break: inherit;
+		    word-wrap: inherit;
+		}
+
+		pre a::before {
+		  content: counter(line-numbering);
+		  counter-increment: line-numbering;
+		  padding-right: 1em; /* space after numbers */
+		  width: 25px;
+		  text-align: right;
+		  opacity: 0.7;
+		  display: inline-block;
+		  color: #aaa;
+		  background: #eee;
+		  margin-right: 16px;
+		  padding: 2px 10px;
+		  font-size: 13px;
+		  -webkit-touch-callout: none;
+		  -webkit-user-select: none;
+		  -khtml-user-select: none;
+		  -moz-user-select: none;
+		  -ms-user-select: none;
+		  user-select: none;
+		}
+
+		pre a:first-of-type::before {
+		  padding-top: 10px;
+		}
+
+		pre a:last-of-type::before {
+		  padding-bottom: 10px;
+		}
+
+		pre a:only-of-type::before {
+		  padding: 10px;
+		}
+
+		.highlight { background-color: #ffffcc } /* RIGHT */
+		</style>
+  </head>
+  <body>
+	  <div>
+				<div style='width:25%;'>
+						<ul id="tree" class="ztree" style='width:100%'>
+
+						</ul>
+				</div>
+        <div id='readme' style='width:70%;margin-left:20%;'>
+          	<article class='markdown-body'>
+            	<h2 id="-">背景</h2>
+<p>SDK支持window、iOS、Android等，内里有很多文件，每次手动生成.a及头文件，由于这个库很多人维护，不清楚具体的修改情况，会只生成.a文件，没有重新生成头文件，导致有些接口返回异常或不能使用，最近就因为这个原因导致上线的一个游戏用户串号，给公司造成不小的损失。本着一次解决问题的想法，引入脚本处理人工步骤。</p>
+<h2 id="-">解决方案</h2>
+<p>出新版本SDK时，用脚本同步生成头文件和静态库.a，避免人为因素导致的问题。</p>
+<p>1、新建一个target
+<img src="https://upload-images.jianshu.io/upload_images/1648908-1cef1eee5da57de0.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240" alt="Aggregate.png"></p>
+<p>2、编写处理脚本
+脚本部分包含源代码文件夹，生成头文件需要copy一份源码，删除非.h文件，重命名为include文件夹，放到Vigame文件夹下,xxx.a也放到此目录下。
+<em>注：此部分为公司特有，且不支持模拟器及arm64以下架构，有需要可以自行裁剪</em></p>
+<pre><code>if [ &quot;${ACTION}&quot; = &quot;build&quot; ]
+then
+
+#要build的target名
+target_Name=${PROJECT_NAME}
+    echo &quot;target_Name=${target_Name}&quot;
+
+#build之后的文件夹路径
+build_DIR=${SRCROOT}/build
+    echo &quot;build_DIR=${build_DIR}&quot;
+
+#vigame源文件夹路径
+
+SOURCE_DIR=$(dirname $(dirname $(dirname &quot;${SRCROOT}&quot;)))
+
+VIGAME_PATH=&quot;${SOURCE_DIR}/source/vigame&quot;
+#真机build生成的头文件的文件夹路径
+DEVICE_DIR_INCLUDE=${build_DIR}/Release-iphoneos/${PROJECT_NAME}
+    echo &quot;DEVICE_DIR_INCLUDE=${DEVICE_DIR_INCLUDE}&quot;
+
+#真机build生成的.a文件路径
+DEVICE_DIR_A=${build_DIR}/Release-iphoneos/lib${PROJECT_NAME}.a
+    echo &quot;DEVICE_DIR_A=${DEVICE_DIR_A}&quot;
+
+#目标文件夹路径
+INSTALL_DIR=${SRCROOT}/Products/${PROJECT_NAME}
+    echo &quot;INSTALL_DIR=${INSTALL_DIR}&quot;
+
+#目标头文件文件夹路径
+INSTALL_DIR_INCLUDE=${SRCROOT}/Products/${PROJECT_NAME}/include
+    echo &quot;INSTALL_DIR_Headers=${INSTALL_DIR_Headers}&quot;
+
+#目标.a路径
+INSTALL_DIR_A=${SRCROOT}/Products/${PROJECT_NAME}/lib${PROJECT_NAME}.a
+    echo &quot;INSTALL_DIR_A=${INSTALL_DIR_A}&quot;
+
+#判断build文件夹是否存在，存在则删除
+if [ -d &quot;${build_DIR}&quot; ]
+then
+rm -rf &quot;${build_DIR}&quot;
+fi
+
+#判断目标文件夹是否存在，存在则删除该文件夹
+if [ -d &quot;${INSTALL_DIR}&quot; ]
+then
+rm -rf &quot;${INSTALL_DIR}&quot;
+fi
+#创建目标文件夹
+mkdir -p &quot;${INSTALL_DIR}&quot;
+
+#build之前clean一下
+xcodebuild -target ${target_Name} clean
+
+#真机build
+xcodebuild -target ${target_Name} -configuration Release -sdk iphoneos
+
+#复制.a/.h文件到目标文件夹
+
+cp -R &quot;${DEVICE_DIR_A}&quot;  &quot;${INSTALL_DIR_A}&quot;
+
+cp -R &quot;${VIGAME_PATH}&quot; &quot;${INSTALL_DIR_INCLUDE}&quot;
+
+rm -rf ${build_DIR}
+
+cd  &quot;${INSTALL_DIR_INCLUDE}&quot;
+
+#删除非.h文件
+find ./ -name *.cpp | xargs rm -f;
+find ./ -name *.m | xargs rm -f;
+find ./ -name *.mm | xargs rm -f;
+find ./ -name *.hpp | xargs rm -f;
+find ./ -name *.a | xargs rm -f;
+
+#打开目标文件夹
+open &quot;${INSTALL_DIR}&quot;
+
+fi
+</code></pre><p>每次重新导出新版本SDK时，只需要执行aggregate，达到事半功倍的效果。</p>
+
+          	</article>
+        </div>
+		</div>
+  </body>
+</html>
+<script type="text/javascript" src="toc/js/jquery-1.4.4.min.js"></script>
+<script type="text/javascript" src="toc/js/jquery.ztree.all-3.5.min.js"></script>
+<script type="text/javascript" src="toc/js/ztree_toc.js"></script>
+<script type="text/javascript" src="toc_conf.js"></script>
+
+<SCRIPT type="text/javascript" >
+<!--
+$(document).ready(function(){
+    var css_conf = eval(markdown_panel_style);
+    $('#readme').css(css_conf)
+    
+    var conf = eval(jquery_ztree_toc_opts);
+		$('#tree').ztree_toc(conf);
+});
+//-->
+</SCRIPT>

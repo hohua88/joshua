@@ -1,0 +1,237 @@
+<html>
+  <head>
+	  <meta http-equiv="content-type" content="text/html; charset=utf-8" />
+    <title>i5ting_ztree_toc:Xcodeproj工程配置脚本化</title>
+		<link href="toc/style/github-bf51422f4bb36427d391e4b75a1daa083c2d840e.css" media="all" rel="stylesheet" type="text/css"/>
+		<link href="toc/style/github2-d731afd4f624c99a4b19ad69f3083cd6d02b81d5.css" media="all" rel="stylesheet" type="text/css"/>
+		<link href="toc/css/zTreeStyle/zTreeStyle.css" media="all" rel="stylesheet" type="text/css"/>
+	  <style>
+		pre {
+		    counter-reset: line-numbering;
+		    border: solid 1px #d9d9d9;
+		    border-radius: 0;
+		    background: #fff;
+		    padding: 0;
+		    line-height: 23px;
+		    margin-bottom: 30px;
+		    white-space: pre;
+		    overflow-x: auto;
+		    word-break: inherit;
+		    word-wrap: inherit;
+		}
+
+		pre a::before {
+		  content: counter(line-numbering);
+		  counter-increment: line-numbering;
+		  padding-right: 1em; /* space after numbers */
+		  width: 25px;
+		  text-align: right;
+		  opacity: 0.7;
+		  display: inline-block;
+		  color: #aaa;
+		  background: #eee;
+		  margin-right: 16px;
+		  padding: 2px 10px;
+		  font-size: 13px;
+		  -webkit-touch-callout: none;
+		  -webkit-user-select: none;
+		  -khtml-user-select: none;
+		  -moz-user-select: none;
+		  -ms-user-select: none;
+		  user-select: none;
+		}
+
+		pre a:first-of-type::before {
+		  padding-top: 10px;
+		}
+
+		pre a:last-of-type::before {
+		  padding-bottom: 10px;
+		}
+
+		pre a:only-of-type::before {
+		  padding: 10px;
+		}
+
+		.highlight { background-color: #ffffcc } /* RIGHT */
+		</style>
+  </head>
+  <body>
+	  <div>
+				<div style='width:25%;'>
+						<ul id="tree" class="ztree" style='width:100%'>
+
+						</ul>
+				</div>
+        <div id='readme' style='width:70%;margin-left:20%;'>
+          	<article class='markdown-body'>
+            	<p>最近有需求用脚本实现工程的配置，现记录一下，实用的是Xcodeproj来实现修改配置。我们的库是c++写的，依赖了openssl等库，需要添加路径依赖</p>
+<p>##1.安装xcodeproj</p>
+<pre><code>[sudo] gem install xcodeproj
+</code></pre><p>##2.xcodeproj在工程添加group并引入xx.h和xx.m文件</p>
+<pre><code>#添加group
+require &#39;xcodeproj&#39;
+
+#获取target名字
+$target_name
+file_path=Dir::pwd
+aDir=Dir::entries(file_path)
+aDir.each do |dir_file|
+    if dir_file.include?(&#39;xcodeproj&#39;)
+        $target_name= dir_file.split(&#39;.&#39;)[0]
+    end
+end
+#工程路径
+$path = File.join(File.dirname(__FILE__), &quot;#{$target_name}.xcodeproj&quot;)
+puts &quot;获得当前文件的目录 = #{$path} &quot;
+#获取project
+$project = Xcodeproj::Project.open($path)
+puts &quot;当前project = #{$project} &quot;
+
+#获取target
+$target = $project.targets.first
+puts &quot;当前target = #{$target} &quot;
+$group = $project.main_group.find_subpath(File.join(&#39;Vigame&#39;), true)
+$group.clear
+puts &quot;当前group = #{$group} &quot;
+$group.set_source_tree(&#39;SOURCE_ROOT&#39;)
+
+$project.save
+</code></pre><p>##3.添加HEADER_SEARCH_PATHS设置</p>
+<pre><code>$target.build_configurations.each do |config|
+   nums = Array[&quot;\&quot;$(SRCROOT)/Vigame/include\&quot;&quot;,&quot;\&quot;$(SRCROOT)/Vigame/deps/curl/include/ios\&quot;&quot;, &quot;\&quot;$(SRCROOT)/Vigame/deps/openssl/include/ios\&quot;&quot;, &quot;\&quot;$(SRCROOT)/Vigame/deps/zlib/include/linux\&quot;&quot;, &quot;\&quot;$(SRCROOT)/Vigame/deps/boost/include\&quot;&quot;]
+   paths = config.build_settings[&#39;HEADER_SEARCH_PATHS&#39;]
+ paths.concat(nums)
+ config.build_settings[&#39;HEADER_SEARCH_PATHS&#39;] = paths.uniq
+ puts config.build_settings[&#39;HEADER_SEARCH_PATHS&#39;]
+ end
+
+</code></pre><p>##4.添加LIBRARY_SEARCH_PATHS设置</p>
+<pre><code>$target.build_configurations.each do |config|
+   nums = Array[&quot;\&quot;$(SRCROOT)/Vigame\&quot;&quot;]
+   paths = config.build_settings[&#39;LIBRARY_SEARCH_PATHS&#39;]
+
+   paths.concat(nums)
+
+   config.build_settings[&#39;LIBRARY_SEARCH_PATHS&#39;] = paths.uniq
+
+   puts &quot;LIBRARY_SEARCH_PATHS设置成功 &quot;
+
+end
+</code></pre><p>#5、添加其他设置</p>
+<pre><code>$target.build_configurations.each do |config|
+
+   config.build_settings[&#39;ENABLE_BITCODE&#39;] = &#39;NO&#39;
+   config.build_settings[&#39;ENABLE_BITCODE&#39;] = &#39;NO&#39;
+   config.build_settings[&#39;GCC_C_LANGUAGE_STANDARD&#39;] = &#39;gnu11&#39;
+   config.build_settings[&#39;CLANG_CXX_LANGUAGE_STANDARD&#39;] = &#39;gnu++14&#39;
+   config.build_settings[&#39;GCC_ENABLE_CPP_RTTI&#39;] = &#39;YES&#39;
+   config.build_settings[&#39;GCC_ENABLE_OBJC_EXCEPTIONS&#39;] = &#39;YES&#39;
+   config.build_settings[&#39;CODE_SIGN_STYLE&#39;] = &#39;Manual&#39;
+   config.build_settings[&#39;DEVELOPMENT_TEAM&#39;] = &#39;xxx&#39;
+   config.build_settings[&#39;PRODUCT_BUNDLE_IDENTIFIER&#39;] = &#39;com.xx.xx.xx&#39;
+   if config.name == &quot;Release&quot;
+       config.build_settings[&#39;PROVISIONING_PROFILE_SPECIFIER&#39;] = &#39;xxx&#39;
+        config.build_settings[&#39;CODE_SIGN_IDENTITY&#39;] = &#39;iPhone Distribution&#39;
+       config.build_settings[&#39;CODE_SIGN_IDENTITY[sdk=iphoneos*]&#39;] = &#39;iPhone Distribution&#39;
+   else
+       config.build_settings[&#39;PROVISIONING_PROFILE_SPECIFIER&#39;] = &#39;xxx&#39;
+       config.build_settings[&#39;CODE_SIGN_IDENTITY&#39;] = &#39;iPhone Developer&#39;
+       config.build_settings[&#39;CODE_SIGN_IDENTITY[sdk=iphoneos*]&#39;] = &#39;iPhone Developer&#39;
+   end
+end
+puts &quot;其他设置成功 &quot;
+</code></pre><p>##6.添加.h,m文件</p>
+<pre><code>$file_refs = []
+$file_path3 = File.join(File.dirname(__FILE__), &quot;xxx.h&quot;)
+$file_path4 = File.join(File.dirname(__FILE__), &quot;xxx.mm&quot;)
+if $group.find_file_by_path($file_path3)
+    puts &quot;xx.h已添加&quot;
+else
+    $file_refs &lt;&lt; $group.new_reference($file_path3)
+end
+if $group.find_file_by_path($file_path4)
+    puts &quot;xx.mm已添加&quot;
+else
+    $file_refs &lt;&lt; $group.new_reference($file_path4)
+end
+
+$target.add_file_references($file_refs)
+$target.source_build_phase.remove_file_reference($file_refs)
+$target.headers_build_phase.remove_file_reference($file_refs)
+
+$file_path7 = File.join(File.dirname(__FILE__), &quot;xx.plist&quot;)
+if $group.find_file_by_path($file_path7)
+    puts &quot;xxx.plist已添加&quot;
+else
+    $target.resources_build_phase.add_file_reference($group.new_reference($file_path7))
+end
+
+end
+</code></pre><p>##6.添加xx.a的引用（bundle，framework）</p>
+<pre><code>$file_path2 = File.join(File.dirname(__FILE__), &quot;xxx/xxx.a&quot;)
+
+#先移除.a
+$file_ref = $project.frameworks_group.new_file($file_path2)
+$target.frameworks_build_phases.remove_file_reference($file_ref)
+$project.frameworks_group.remove_reference($file_ref)
+#再添加.a
+$target.frameworks_build_phases.add_file_reference($file_ref)
+
+#添加xx.framework的引用
+#file_ref = project.frameworks_group.new_file(&#39;xxPath/xx.framework&#39;)
+#target.frameworks_build_phases.add_file_reference(file_ref)
+
+#添加xx.bundle的引用
+#file_ref = project.frameworks_group.new_file(&#39;xxPath/xx.bundle&#39;)
+#target.resources_build_phase.add_file_reference(file_ref)
+
+ #添加.plist
+$target.resources_build_phase.add_file_reference($group.new_reference($file_path8))
+</code></pre><p>##7.通过xcodeproj设置证书</p>
+<pre><code>$target.build_configurations.each do |config|
+  if config.name == &#39;Debug&#39;
+    config.build_settings[&quot;PROVISIONING_PROFILE_SPECIFIER&quot;] = &quot;xxProfileName&quot;
+    config.build_settings[&quot;DEVELOPMENT_TEAM&quot;] = &quot;xxTeamName&quot;
+    config.build_settings[&quot;CODE_SIGN_IDENTITY&quot;] = &quot;xxIdentityName&quot;
+    config.build_settings[&quot;CODE_SIGN_IDENTITY[sdk=iphoneos*]&quot;] = &quot;iPhone Developer&quot;
+  end
+end
+</code></pre><p>##8.添加系统库(framework、tbd)
+Xcodeprj提供的添加方式有问题：target.add_system_framework(),问题是路径有问题导致的</p>
+<pre><code>sys_path = &quot;Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS.sdk/System/Library/Frameworks/Metal.framework&quot;
+sys_group = $project.frameworks_group()
+unless ref = sys_group.find_file_by_path(sys_path)
+  ref = sys_group.new_file(sys_path, :developer_dir)
+end
+$target.frameworks_build_phase.add_file_reference(ref, true)
+ref
+
+$target.add_system_library_tbd(&quot;sqlite3.0&quot;)
+</code></pre><p>##9.参考文档
+<a href="https://github.com/CocoaPods/Xcodeproj.git">Xcodeproj</a>
+<a href="https://blog.csdn.net/allanGold/article/details/99624099">项目工程的配置库xcodeproj</a>
+<a href="https://www.jianshu.com/p/76ab1d57ad73">iOS自动打包之xcodeproj</a>
+<a href="https://link.jianshu.com/?t=http://www.rubydoc.info/gems/xcodeproj/Xcodeproj">http://www.rubydoc.info/gems/xcodeproj/Xcodeproj</a></p>
+
+          	</article>
+        </div>
+		</div>
+  </body>
+</html>
+<script type="text/javascript" src="toc/js/jquery-1.4.4.min.js"></script>
+<script type="text/javascript" src="toc/js/jquery.ztree.all-3.5.min.js"></script>
+<script type="text/javascript" src="toc/js/ztree_toc.js"></script>
+<script type="text/javascript" src="toc_conf.js"></script>
+
+<SCRIPT type="text/javascript" >
+<!--
+$(document).ready(function(){
+    var css_conf = eval(markdown_panel_style);
+    $('#readme').css(css_conf)
+    
+    var conf = eval(jquery_ztree_toc_opts);
+		$('#tree').ztree_toc(conf);
+});
+//-->
+</SCRIPT>

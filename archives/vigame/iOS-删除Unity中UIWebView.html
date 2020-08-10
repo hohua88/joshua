@@ -1,0 +1,161 @@
+<html>
+  <head>
+	  <meta http-equiv="content-type" content="text/html; charset=utf-8" />
+    <title>i5ting_ztree_toc:iOS-删除Unity中UIWebView</title>
+		<link href="toc/style/github-bf51422f4bb36427d391e4b75a1daa083c2d840e.css" media="all" rel="stylesheet" type="text/css"/>
+		<link href="toc/style/github2-d731afd4f624c99a4b19ad69f3083cd6d02b81d5.css" media="all" rel="stylesheet" type="text/css"/>
+		<link href="toc/css/zTreeStyle/zTreeStyle.css" media="all" rel="stylesheet" type="text/css"/>
+	  <style>
+		pre {
+		    counter-reset: line-numbering;
+		    border: solid 1px #d9d9d9;
+		    border-radius: 0;
+		    background: #fff;
+		    padding: 0;
+		    line-height: 23px;
+		    margin-bottom: 30px;
+		    white-space: pre;
+		    overflow-x: auto;
+		    word-break: inherit;
+		    word-wrap: inherit;
+		}
+
+		pre a::before {
+		  content: counter(line-numbering);
+		  counter-increment: line-numbering;
+		  padding-right: 1em; /* space after numbers */
+		  width: 25px;
+		  text-align: right;
+		  opacity: 0.7;
+		  display: inline-block;
+		  color: #aaa;
+		  background: #eee;
+		  margin-right: 16px;
+		  padding: 2px 10px;
+		  font-size: 13px;
+		  -webkit-touch-callout: none;
+		  -webkit-user-select: none;
+		  -khtml-user-select: none;
+		  -moz-user-select: none;
+		  -ms-user-select: none;
+		  user-select: none;
+		}
+
+		pre a:first-of-type::before {
+		  padding-top: 10px;
+		}
+
+		pre a:last-of-type::before {
+		  padding-bottom: 10px;
+		}
+
+		pre a:only-of-type::before {
+		  padding: 10px;
+		}
+
+		.highlight { background-color: #ffffcc } /* RIGHT */
+		</style>
+  </head>
+  <body>
+	  <div>
+				<div style='width:25%;'>
+						<ul id="tree" class="ztree" style='width:100%'>
+
+						</ul>
+				</div>
+        <div id='readme' style='width:70%;margin-left:20%;'>
+          	<article class='markdown-body'>
+            	<p>##背景介绍
+苹果在审核拒约时给出了以下信息：
+ITMS-90809: Deprecated API Usage – Apple will stop accepting submissions of apps that use UIWebView APIs . See <a href="https://developer.apple.com/documentation/uikit/uiwebview">https://developer.apple.com/documentation/uikit/uiwebview</a>
+for more information.</p>
+<p>但是项目内并未使用 UIWebView API，尝试使用 Unity 构建一个空工程上传到 TestFlight 或者 QuickSDK
+进行预先检查，发现依然存在 UIWebView API 调用。</p>
+<p>搜索后发现 Unity 已在 2017.4, 2018.4, 2019.2, 2019.3, 2020.1 中修复，但是旧版本如 Unity 5.6 就不管了：</p>
+<p><a href="https://www.colabug.com/goto/aHR0cHM6Ly9pc3N1ZXRyYWNrZXIudW5pdHkzZC5jb20vaXNzdWVzL2lvcy1hcHBsZS10aHJvd3MtZGVwcmVjYXRlZC1hcGktdXNhZ2Utd2FybmluZy1mb3ItdXNpbmctdWl3ZWJ2aWV3LXdoZW4tc3VibWl0dGluZy1idWlsZHMtdG8tdGhlLWFwcC1zdG9yZS1jb25uZWN0">Unity Issue Tracker – [iOS] Apple throws Deprecated API Usage warning for using UIWebView when submitting Builds to the App Store Connect</a></p>
+<p>##解决方案
+1、首先将以下内容保存为 URLUtility.mm</p>
+<pre><code>#include &lt;iostream&gt;
+#import &lt;UIKit/UIKit.h&gt;
+using namespace std;
+namespace core {
+template &lt;class type&gt;
+class StringStorageDefault {};
+template &lt;class type,class type2&gt;
+class basic_string {
+public:
+char *c_str(void);
+};
+}
+void OpenURLInGame(core::basic_string&lt; char,core::StringStorageDefault&lt;char&gt; &gt; const&amp;arg){}
+void OpenURL(core::basic_string&lt;char,core::StringStorageDefault&lt;char&gt; &gt;const&amp;arg){
+const void *arg2= &amp;arg;
+UIApplication *app = [UIApplication sharedApplication];
+NSString *urlStr = [NSString stringWithUTF8String:(char *)arg2];
+NSURL *url = [NSURL URLWithString:urlStr];
+[app openURL:url];
+}
+void OpenURL(std::string const&amp;arg){
+UIApplication *app = [UIApplication sharedApplication];
+NSString *urlStr = [NSString stringWithUTF8String:arg.c_str()];
+NSURL *url = [NSURL URLWithString:urlStr];
+[app openURL:url];
+}
+</code></pre><p>2、查看libiPhone-lib.a支持那些架构</p>
+<pre><code>file libiPhone-lib.a
+libiPhone-lib.a: Mach-O universal binary with 3 architectures: [arm_v7:current ar archive] [arm64] [arm_v7s]
+libiPhone-lib.a (for architecture armv7):    current ar archive
+libiPhone-lib.a (for architecture arm64):    current ar archive
+libiPhone-lib.a (for architecture armv7s):    current ar archive
+</code></pre><p>3、编译对应架构的URLUtility.o</p>
+<pre><code>//arm64
+clang -c URLUtility.mm -arch arm64 -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS.sdk
+//armv7s
+clang -c URLUtility.mm  -arch armv7s -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS.sdk
+//armv7
+clang -c URLUtility.mm  -arch armv7 -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS.sdk
+</code></pre><p>⚠️不能同时编译3种架构，fouz不能移除</p>
+<pre><code>ar -d /Users/eddy/Desktop/lib/libiPhone-lib.a URLUtility.o
+ar: /Users/eddy/Desktop/lib/libiPhone-lib.a is a fat file (use libtool(1) or lipo(1) and ar(1) on it)
+ar: /Users/eddy/Desktop/lib/libiPhone-lib.a: Inappropriate file type or format
+</code></pre><p>注意： -isysroot
+指定的 SDK 路径一定是当前工程使用的 Xcode 版本，特别是当机器上存在多个 Xcode 版本时要注意。</p>
+<p>4、分离lipo libiPhone-lib.a中每个架构的.a</p>
+<pre><code> lipo libiPhone-lib.a -thin armv7 -output libiPhone-lib_armv7.a
+</code></pre><p>5、替换对应分离出来架构的.o</p>
+<pre><code>//删除原有的 URLUtility.o
+ar -d libiPhone-lib_armv7.a URLUtility.o
+//在文件最后增加 URLUtility.o
+ar -q libiPhone-lib_armv7.a URLUtility.o
+</code></pre><p>6、合并替换后的.a</p>
+<pre><code>//合并armv7和armv7s
+ipo -create libiPhone-lib_arm64.a libiPhone-lib_armv7.a libiPhone-lib_armv7s.a -output libiPhone-lib_new.a 
+//合并arm64和上面的合并
+lipo -create libiPhone-lib_new.a  libiPhone-lib_arm64.a  -output libiPhone-lib_w.a 
+</code></pre><p>7、用合并后的替换之前的.a,解决问题</p>
+<ul>
+<li><a href="https://www.colabug.com/goto/aHR0cHM6Ly93d3cuamlhbnNodS5jb20vcC9hZDM1NGYxMWQ4NTI=">libiPhone-lib.a去掉WebViewController – 简书</a></li>
+<li><a href="https://www.colabug.com/2020/0113/6839873/amp/">Unity iOS 删除 UIWebView</a></li>
+</ul>
+
+          	</article>
+        </div>
+		</div>
+  </body>
+</html>
+<script type="text/javascript" src="toc/js/jquery-1.4.4.min.js"></script>
+<script type="text/javascript" src="toc/js/jquery.ztree.all-3.5.min.js"></script>
+<script type="text/javascript" src="toc/js/ztree_toc.js"></script>
+<script type="text/javascript" src="toc_conf.js"></script>
+
+<SCRIPT type="text/javascript" >
+<!--
+$(document).ready(function(){
+    var css_conf = eval(markdown_panel_style);
+    $('#readme').css(css_conf)
+    
+    var conf = eval(jquery_ztree_toc_opts);
+		$('#tree').ztree_toc(conf);
+});
+//-->
+</SCRIPT>

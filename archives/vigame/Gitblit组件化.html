@@ -1,0 +1,196 @@
+<html>
+  <head>
+	  <meta http-equiv="content-type" content="text/html; charset=utf-8" />
+    <title>i5ting_ztree_toc:Gitblit组件化</title>
+		<link href="toc/style/github-bf51422f4bb36427d391e4b75a1daa083c2d840e.css" media="all" rel="stylesheet" type="text/css"/>
+		<link href="toc/style/github2-d731afd4f624c99a4b19ad69f3083cd6d02b81d5.css" media="all" rel="stylesheet" type="text/css"/>
+		<link href="toc/css/zTreeStyle/zTreeStyle.css" media="all" rel="stylesheet" type="text/css"/>
+	  <style>
+		pre {
+		    counter-reset: line-numbering;
+		    border: solid 1px #d9d9d9;
+		    border-radius: 0;
+		    background: #fff;
+		    padding: 0;
+		    line-height: 23px;
+		    margin-bottom: 30px;
+		    white-space: pre;
+		    overflow-x: auto;
+		    word-break: inherit;
+		    word-wrap: inherit;
+		}
+
+		pre a::before {
+		  content: counter(line-numbering);
+		  counter-increment: line-numbering;
+		  padding-right: 1em; /* space after numbers */
+		  width: 25px;
+		  text-align: right;
+		  opacity: 0.7;
+		  display: inline-block;
+		  color: #aaa;
+		  background: #eee;
+		  margin-right: 16px;
+		  padding: 2px 10px;
+		  font-size: 13px;
+		  -webkit-touch-callout: none;
+		  -webkit-user-select: none;
+		  -khtml-user-select: none;
+		  -moz-user-select: none;
+		  -ms-user-select: none;
+		  user-select: none;
+		}
+
+		pre a:first-of-type::before {
+		  padding-top: 10px;
+		}
+
+		pre a:last-of-type::before {
+		  padding-bottom: 10px;
+		}
+
+		pre a:only-of-type::before {
+		  padding: 10px;
+		}
+
+		.highlight { background-color: #ffffcc } /* RIGHT */
+		</style>
+  </head>
+  <body>
+	  <div>
+				<div style='width:25%;'>
+						<ul id="tree" class="ztree" style='width:100%'>
+
+						</ul>
+				</div>
+        <div id='readme' style='width:70%;margin-left:20%;'>
+          	<article class='markdown-body'>
+            	<p>1.在Gitblit上创建一个自己的远程私有索引库，用来存放私有框架的podspec文件
+<img src="https://upload-images.jianshu.io/upload_images/1648908-cfadea6a41f51ab7.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240" alt="image.png"></p>
+<ol start="2">
+<li>创建本地的私有索引库文件夹，并与远程私有索引库进行关联</li>
+</ol>
+<p>2.1添加本地私有索引库并与远程私有库</p>
+<pre><code>$ pod repo add IOSMavenSpec http://wy@dnsdk.vimedia.cn:8080/r/IOSMavenSpec.git
+</code></pre><p><img src="https://upload-images.jianshu.io/upload_images/1648908-cebc87b46a751874.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240" alt="image.png"></p>
+<p>2.2 再次查看本地已存在的索引库 </p>
+<pre><code> pod repo
+</code></pre><p>3 在Gitblit创建一个用来存放项目基础组件的仓库IOSMaven
+参见第一步</p>
+<p>4 快速创建模板工程(模板来自github)</p>
+<p>4.1 快速创建模板测试工程 在/Users/eddy/Desktop/IOSMaven路径下</p>
+<pre><code>  $ cd /Users/eddy/
+
+  $ pod lib create KTM-iOS-SDK
+</code></pre><p>4.2 本地验证podspec</p>
+<pre><code>pod lib lint --allow-warnings  --use-libraries --verbose
+</code></pre><p>验证不过的话；可以添加--verbose查看详细错误信息</p>
+<p>4.3 提交本地代码</p>
+<pre><code>$ git status
+$ git add .
+$ git commit -m &#39;first commit&#39;
+$ git remote add origin &#39;[http://wy@dnsdk.vimedia.cn:8080/r/KTM-iOS-SDK.git](http://wy@dnsdk.vimedia.cn:8080/r/IOSMavenSpec.git&#39;)
+ (将本地库与远程代码仓库进行关联)
+$ git push origin master  (提交到远程仓库)
+$ git tag &#39;0.1.0&#39; (要与IOSMaven.podspec文件中的tag值保持一致)
+$ git push --tags(将tag提交到远程)
+</code></pre><p>4.4 验证远程是否正确</p>
+<pre><code>pod spec lint --allow-warnings --use-libraries --verbose（验证远程是否正确） 
+</code></pre><p>5 将podspec文件提交到本地的私有索引库</p>
+<pre><code>$ pod repo push IOSMavenSpec IOSMaven.podspec --allow-warnings
+</code></pre><p>5 组件化
+5.1、抽离一个基础组件Tools</p>
+<pre><code> spec.default_subspecs =  &#39;Common&#39;  #默认组件
+
+  spec.subspec &#39;Common&#39; do |ss|
+    ss.ios.deployment_target = &#39;9.0&#39;
+    ss.vendored_frameworks = &#39;Common/*.framework&#39;
+  end
+</code></pre><p>5.2、模块组件</p>
+<pre><code>
+spec.subspec &#39;Ads&#39; do |ss|
+  ss.dependency &#39;KTMSDK/Common&#39;
+   ss.subspec &#39;ByteDance&#39; do |hl| #头条广告
+      hl.vendored_frameworks = &quot;Ads/ByteDance/*.framework&quot;
+      hl.resource = &quot;Ads/ByteDance/*.bundle&quot;
+     end
+end
+</code></pre><p>加载xib资源需要制作bundle <a href="https://www.jianshu.com/writer#/notebooks/38500610/notes/56527770">组件化framework加载xib</a></p>
+<p>6 引用远程库</p>
+<pre><code>source &#39;http://wy@dnsdk.vimedia.cn:8080/r/IOSMavenSpec.git&#39; #远程私有库地址
+source &#39;https://cdn.cocoapods.org/&#39; #公有库地址
+
+platform :ios, &#39;9.0&#39;
+target &#39;Unity-iPhone&#39; do
+
+sdkVersion=&#39;1.0.0&#39;
+####--Ads---###
+pod &#39;KTMSDK/Ads/ByteDance&#39;,sdkVersion
+pod &#39;Bytedance-UnionAD&#39;, &#39;2.8.0.1&#39;
+pod &#39;KTMSDK/Ads/IronSource&#39;,sdkVersion
+pod &#39;KTMSDK/Ads/Admob&#39;,sdkVersion
+pod &#39;KTMSDK/Ads/GDT&#39;,sdkVersion
+pod &#39;KTMSDK/Ads/Unity&#39;,sdkVersion
+pod &#39;KTMSDK/Ads/Mintegral&#39;,sdkVersion
+pod &#39;KTMSDK/Ads/Facebook&#39;,sdkVersion
+pod &#39;KTMSDK/Ads/Applovin&#39;,sdkVersion
+pod &#39;KTMSDK/Ads/KTMAd&#39;,sdkVersion
+pod &#39;KTMSDK/Ads/Vungle&#39;,sdkVersion
+####--Analysis---###
+pod &#39;KTMSDK/Analysis/Umeng&#39;,sdkVersion
+pod &#39;KTMSDK/Analysis/TrackingIO&#39;,sdkVersion
+pod &#39;KTMSDK/Analysis/ByteDance&#39;,sdkVersion
+pod &#39;KTMSDK/Analysis/DataEye&#39;,sdkVersion
+pod &#39;KTMSDK/Analysis/Appsflyer&#39;,sdkVersion
+pod &#39;KTMSDK/Analysis/Facebook&#39;,sdkVersion
+pod &#39;KTMSDK/Analysis/Adjust&#39;,sdkVersion
+pod &#39;KTMSDK/Analysis/Tenjin&#39;,sdkVersion
+pod &#39;KTMSDK/Analysis/Google&#39;,sdkVersion
+####--Social---###
+pod &#39;KTMSDK/Social/wechat&#39;,sdkVersion
+pod &#39;KTMSDK/Social/facebook&#39;,sdkVersion
+pod &#39;KTMSDK/Social/apple&#39;,sdkVersion
+####--Extension---###
+pod &#39;KTMSDK/Extension/notice&#39;,sdkVersion
+pod &#39;KTMSDK/Extension/activity&#39;,sdkVersion
+pod &#39;KTMSDK/Extension/auth&#39;,sdkVersion
+####--other---###
+pod &#39;KTMSDK/Bugly&#39;,sdkVersion
+pod &#39;KTMSDK/IAP&#39;,sdkVersion
+</code></pre><p>注：ironsource聚合广告需单独导入</p>
+<pre><code>```
+#IronSource 聚合广告按需添加
+pod &#39;IronSourceAdMobAdapter&#39;,&#39;4.3.10.1&#39;
+pod &#39;IronSourceFacebookAdapter&#39;,&#39;4.3.14.0&#39;
+pod &#39;IronSourceUnityAdsAdapter&#39;,&#39;4.3.0.1&#39;
+pod &#39;IronSourceTikTokAdapter&#39;,&#39;4.1.2.7&#39;
+pod &#39;IronSourceAppLovinAdapter&#39;,&#39;4.3.10.1&#39;
+pod &#39;IronSourceMintegralAdapter&#39;,&#39;4.3.1.0&#39;
+```
+</code></pre><p>遇到问题：
+1、不能同时存在同一个SDK的不同版本(ironsource聚合中的第三方广告单独pod)
+2、依赖海外的需要放到本地（比如FBAudienceNe
+twork），目前有外网是pod方式引入
+cocopods搭私有库报错- ERROR | [iOS] xcodebuild: Returned an unsuccessful exit code.（库存在多个，比如irons聚合中有unity，单独的unity仅保留一个）</p>
+
+          	</article>
+        </div>
+		</div>
+  </body>
+</html>
+<script type="text/javascript" src="toc/js/jquery-1.4.4.min.js"></script>
+<script type="text/javascript" src="toc/js/jquery.ztree.all-3.5.min.js"></script>
+<script type="text/javascript" src="toc/js/ztree_toc.js"></script>
+<script type="text/javascript" src="toc_conf.js"></script>
+
+<SCRIPT type="text/javascript" >
+<!--
+$(document).ready(function(){
+    var css_conf = eval(markdown_panel_style);
+    $('#readme').css(css_conf)
+    
+    var conf = eval(jquery_ztree_toc_opts);
+		$('#tree').ztree_toc(conf);
+});
+//-->
+</SCRIPT>

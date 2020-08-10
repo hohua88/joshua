@@ -1,0 +1,256 @@
+<html>
+  <head>
+	  <meta http-equiv="content-type" content="text/html; charset=utf-8" />
+    <title>i5ting_ztree_toc:iOS脚本生成icon</title>
+		<link href="toc/style/github-bf51422f4bb36427d391e4b75a1daa083c2d840e.css" media="all" rel="stylesheet" type="text/css"/>
+		<link href="toc/style/github2-d731afd4f624c99a4b19ad69f3083cd6d02b81d5.css" media="all" rel="stylesheet" type="text/css"/>
+		<link href="toc/css/zTreeStyle/zTreeStyle.css" media="all" rel="stylesheet" type="text/css"/>
+	  <style>
+		pre {
+		    counter-reset: line-numbering;
+		    border: solid 1px #d9d9d9;
+		    border-radius: 0;
+		    background: #fff;
+		    padding: 0;
+		    line-height: 23px;
+		    margin-bottom: 30px;
+		    white-space: pre;
+		    overflow-x: auto;
+		    word-break: inherit;
+		    word-wrap: inherit;
+		}
+
+		pre a::before {
+		  content: counter(line-numbering);
+		  counter-increment: line-numbering;
+		  padding-right: 1em; /* space after numbers */
+		  width: 25px;
+		  text-align: right;
+		  opacity: 0.7;
+		  display: inline-block;
+		  color: #aaa;
+		  background: #eee;
+		  margin-right: 16px;
+		  padding: 2px 10px;
+		  font-size: 13px;
+		  -webkit-touch-callout: none;
+		  -webkit-user-select: none;
+		  -khtml-user-select: none;
+		  -moz-user-select: none;
+		  -ms-user-select: none;
+		  user-select: none;
+		}
+
+		pre a:first-of-type::before {
+		  padding-top: 10px;
+		}
+
+		pre a:last-of-type::before {
+		  padding-bottom: 10px;
+		}
+
+		pre a:only-of-type::before {
+		  padding: 10px;
+		}
+
+		.highlight { background-color: #ffffcc } /* RIGHT */
+		</style>
+  </head>
+  <body>
+	  <div>
+				<div style='width:25%;'>
+						<ul id="tree" class="ztree" style='width:100%'>
+
+						</ul>
+				</div>
+        <div id='readme' style='width:70%;margin-left:20%;'>
+          	<article class='markdown-body'>
+            	<pre><code>IconContents(){
+cat &lt;&lt;EOF &gt;./AppIcon.appiconset/Contents.json
+
+    {
+        &quot;images&quot;: [
+            {
+                &quot;size&quot;: &quot;20x20&quot;,
+                &quot;idiom&quot;: &quot;iphone&quot;,
+                &quot;filename&quot;: &quot;icon-20@2x.png&quot;,
+                &quot;scale&quot;: &quot;2x&quot;
+            },
+            {
+                &quot;size&quot;: &quot;20x20&quot;,
+                &quot;idiom&quot;: &quot;iphone&quot;,
+                &quot;filename&quot;: &quot;icon-20@3x.png&quot;,
+                &quot;scale&quot;: &quot;3x&quot;
+            },
+            {
+                &quot;size&quot;: &quot;29x29&quot;,
+                &quot;idiom&quot;: &quot;iphone&quot;,
+                &quot;filename&quot;: &quot;icon-29.png&quot;,
+                &quot;scale&quot;: &quot;1x&quot;
+            },
+            {
+                &quot;size&quot;: &quot;29x29&quot;,
+                &quot;idiom&quot;: &quot;iphone&quot;,
+                &quot;filename&quot;: &quot;icon-29@2x.png&quot;,
+                &quot;scale&quot;: &quot;2x&quot;
+            },
+            {
+                &quot;size&quot;: &quot;29x29&quot;,
+                &quot;idiom&quot;: &quot;iphone&quot;,
+                &quot;filename&quot;: &quot;icon-29@3x.png&quot;,
+                &quot;scale&quot;: &quot;3x&quot;
+            },
+            {
+                &quot;size&quot;: &quot;40x40&quot;,
+                &quot;idiom&quot;: &quot;iphone&quot;,
+                &quot;filename&quot;: &quot;icon-40@2x.png&quot;,
+                &quot;scale&quot;: &quot;2x&quot;
+            },
+            {
+                &quot;size&quot;: &quot;40x40&quot;,
+                &quot;idiom&quot;: &quot;iphone&quot;,
+                &quot;filename&quot;: &quot;icon-40@3x.png&quot;,
+                &quot;scale&quot;: &quot;3x&quot;
+            },
+            {
+                &quot;size&quot;: &quot;60x60&quot;,
+                &quot;idiom&quot;: &quot;iphone&quot;,
+                &quot;filename&quot;: &quot;icon-60@2x.png&quot;,
+                &quot;scale&quot;: &quot;2x&quot;
+            },
+            {
+                &quot;size&quot;: &quot;60x60&quot;,
+                &quot;idiom&quot;: &quot;iphone&quot;,
+                &quot;filename&quot;: &quot;icon-60@3x.png&quot;,
+                &quot;scale&quot;: &quot;3x&quot;
+            },
+            {
+                &quot;size&quot;: &quot;20x20&quot;,
+                &quot;idiom&quot;: &quot;ipad&quot;,
+                &quot;filename&quot;: &quot;icon-20-ipad.png&quot;,
+                &quot;scale&quot;: &quot;1x&quot;
+            },
+            {
+                &quot;size&quot;: &quot;20x20&quot;,
+                &quot;idiom&quot;: &quot;ipad&quot;,
+                &quot;filename&quot;: &quot;icon-20@2x-ipad.png&quot;,
+                &quot;scale&quot;: &quot;2x&quot;
+            },
+            {
+                &quot;size&quot;: &quot;29x29&quot;,
+                &quot;idiom&quot;: &quot;ipad&quot;,
+                &quot;filename&quot;: &quot;icon-29-ipad.png&quot;,
+                &quot;scale&quot;: &quot;1x&quot;
+            },
+            {
+                &quot;size&quot;: &quot;29x29&quot;,
+                &quot;idiom&quot;: &quot;ipad&quot;,
+                &quot;filename&quot;: &quot;icon-29@2x-ipad.png&quot;,
+                &quot;scale&quot;: &quot;2x&quot;
+            },
+            {
+                &quot;size&quot;: &quot;40x40&quot;,
+                &quot;idiom&quot;: &quot;ipad&quot;,
+                &quot;filename&quot;: &quot;icon-40.png&quot;,
+                &quot;scale&quot;: &quot;1x&quot;
+            },
+            {
+                &quot;size&quot;: &quot;40x40&quot;,
+                &quot;idiom&quot;: &quot;ipad&quot;,
+                &quot;filename&quot;: &quot;icon-40@2x.png&quot;,
+                &quot;scale&quot;: &quot;2x&quot;
+            },
+            {
+                &quot;size&quot;: &quot;76x76&quot;,
+                &quot;idiom&quot;: &quot;ipad&quot;,
+                &quot;filename&quot;: &quot;icon-76.png&quot;,
+                &quot;scale&quot;: &quot;1x&quot;
+            },
+            {
+                &quot;size&quot;: &quot;76x76&quot;,
+                &quot;idiom&quot;: &quot;ipad&quot;,
+                &quot;filename&quot;: &quot;icon-76@2x.png&quot;,
+                &quot;scale&quot;: &quot;2x&quot;
+            },
+            {
+                &quot;size&quot;: &quot;83.5x83.5&quot;,
+                &quot;idiom&quot;: &quot;ipad&quot;,
+                &quot;filename&quot;: &quot;icon-83.5@2x.png&quot;,
+                &quot;scale&quot;: &quot;2x&quot;
+            },
+            {
+                &quot;size&quot;: &quot;1024x1024&quot;,
+                &quot;idiom&quot;: &quot;ios-marketing&quot;,
+                &quot;filename&quot;: &quot;icon-1024.png&quot;,
+                &quot;scale&quot;: &quot;1x&quot;
+            }
+        ],
+        &quot;info&quot;: {
+            &quot;version&quot;: 1,
+            &quot;author&quot;: &quot;eddy&quot;
+        }
+    }
+EOF
+}
+
+setIconImage(){
+    echo &quot;20pt图标生成······&quot;
+    sips -z 20 20 $iconfileName --out ./AppIcon.appiconset/icon-20-ipad.png
+    sips -z 40 40 $iconfileName --out ./AppIcon.appiconset/icon-20@2x-ipad.png
+    sips -z 40 40 $iconfileName --out ./AppIcon.appiconset/icon-20@2x.png
+    sips -z 60 60 $iconfileName --out ./AppIcon.appiconset/icon-20@3x.png
+    echo &quot;29pt图标生成······&quot;
+    sips -z 29 29 $iconfileName --out ./AppIcon.appiconset/icon-29-ipad.png
+    sips -z 29 29 $iconfileName --out ./AppIcon.appiconset/icon-29.png
+    sips -z 58 58 $iconfileName --out ./AppIcon.appiconset/icon-29@2x-ipad.png
+    sips -z 58 58 $iconfileName --out ./AppIcon.appiconset/icon-29@2x.png
+    sips -z 87 87 $iconfileName --out ./AppIcon.appiconset/icon-29@3x.png
+    echo &quot;40pt图标生成······&quot;
+    sips -z 40 40 $iconfileName --out ./AppIcon.appiconset/icon-40.png
+    sips -z 80 80 $iconfileName --out ./AppIcon.appiconset/icon-40@2x.png
+    sips -z 120 120 $iconfileName --out ./AppIcon.appiconset/icon-40@3x.png
+    echo &quot;60pt图标生成······&quot;
+    sips -z 120 120 $iconfileName --out ./AppIcon.appiconset/icon-60@2x.png
+    sips -z 180 180 $iconfileName --out ./AppIcon.appiconset/icon-60@3x.png
+    echo &quot;76pt图标生成······&quot;
+    sips -z 76 76 $iconfileName --out ./AppIcon.appiconset/icon-76.png
+    sips -z 152 152 $iconfileName --out ./AppIcon.appiconset/icon-76@2x.png
+
+    echo &quot;83.5pt图标生成······&quot;
+    sips -z 167 167 $iconfileName --out ./AppIcon.appiconset/icon-83.5@2x.png
+
+    echo &quot;1024pt图标生成······&quot;
+    sips -z 1024 1024 $iconfileName --out ./AppIcon.appiconset/icon-1024.png
+}
+mkdir AppIcon.appiconset
+if [ -n &quot;$1&quot; ] ; then
+   iconfileName=$1
+else
+    echo &quot;icon不能为空&quot;
+   exit 1
+fi
+IconContents
+setIconImage
+</code></pre><p>mv -f AppIcon.appiconset  &quot;$x&quot;</p>
+
+          	</article>
+        </div>
+		</div>
+  </body>
+</html>
+<script type="text/javascript" src="toc/js/jquery-1.4.4.min.js"></script>
+<script type="text/javascript" src="toc/js/jquery.ztree.all-3.5.min.js"></script>
+<script type="text/javascript" src="toc/js/ztree_toc.js"></script>
+<script type="text/javascript" src="toc_conf.js"></script>
+
+<SCRIPT type="text/javascript" >
+<!--
+$(document).ready(function(){
+    var css_conf = eval(markdown_panel_style);
+    $('#readme').css(css_conf)
+    
+    var conf = eval(jquery_ztree_toc_opts);
+		$('#tree').ztree_toc(conf);
+});
+//-->
+</SCRIPT>

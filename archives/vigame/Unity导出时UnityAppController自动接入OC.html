@@ -1,0 +1,209 @@
+<html>
+  <head>
+	  <meta http-equiv="content-type" content="text/html; charset=utf-8" />
+    <title>i5ting_ztree_toc:Unity导出时UnityAppController自动接入OC</title>
+		<link href="toc/style/github-bf51422f4bb36427d391e4b75a1daa083c2d840e.css" media="all" rel="stylesheet" type="text/css"/>
+		<link href="toc/style/github2-d731afd4f624c99a4b19ad69f3083cd6d02b81d5.css" media="all" rel="stylesheet" type="text/css"/>
+		<link href="toc/css/zTreeStyle/zTreeStyle.css" media="all" rel="stylesheet" type="text/css"/>
+	  <style>
+		pre {
+		    counter-reset: line-numbering;
+		    border: solid 1px #d9d9d9;
+		    border-radius: 0;
+		    background: #fff;
+		    padding: 0;
+		    line-height: 23px;
+		    margin-bottom: 30px;
+		    white-space: pre;
+		    overflow-x: auto;
+		    word-break: inherit;
+		    word-wrap: inherit;
+		}
+
+		pre a::before {
+		  content: counter(line-numbering);
+		  counter-increment: line-numbering;
+		  padding-right: 1em; /* space after numbers */
+		  width: 25px;
+		  text-align: right;
+		  opacity: 0.7;
+		  display: inline-block;
+		  color: #aaa;
+		  background: #eee;
+		  margin-right: 16px;
+		  padding: 2px 10px;
+		  font-size: 13px;
+		  -webkit-touch-callout: none;
+		  -webkit-user-select: none;
+		  -khtml-user-select: none;
+		  -moz-user-select: none;
+		  -ms-user-select: none;
+		  user-select: none;
+		}
+
+		pre a:first-of-type::before {
+		  padding-top: 10px;
+		}
+
+		pre a:last-of-type::before {
+		  padding-bottom: 10px;
+		}
+
+		pre a:only-of-type::before {
+		  padding: 10px;
+		}
+
+		.highlight { background-color: #ffffcc } /* RIGHT */
+		</style>
+  </head>
+  <body>
+	  <div>
+				<div style='width:25%;'>
+						<ul id="tree" class="ztree" style='width:100%'>
+
+						</ul>
+				</div>
+        <div id='readme' style='width:70%;margin-left:20%;'>
+          	<article class='markdown-body'>
+            	<h2 id="-unityappcontroller-">修改UnityAppController脚本</h2>
+<pre><code>using UnityEngine;
+using System.Collections;
+using System.Collections.Generic;
+using System.IO;
+
+namespace UnityEditor.XCodeEditor
+{
+    public partial class XClass : System.IDisposable
+    {
+
+        private string filePath;
+
+        public XClass(string fPath)
+        {
+            filePath = fPath;
+            if (!System.IO.File.Exists(filePath))
+            {
+                Debug.LogError(filePath + &quot;路径下文件不存在&quot;);
+                return;
+            }
+        }
+
+        public void WriteBelow(string below, string text)
+        {
+            StreamReader streamReader = new StreamReader(filePath);
+            string text_all = streamReader.ReadToEnd();
+            streamReader.Close();
+
+            int beginIndex = text_all.IndexOf(below);
+            if (beginIndex == -1)
+            {
+                Debug.LogError(filePath + &quot;中没有找到标致&quot; + below);
+                return;
+            }
+
+            int endIndex = text_all.LastIndexOf(&quot;\n&quot;, beginIndex + below.Length);
+
+            text_all = text_all.Substring(0, endIndex) + &quot;\n&quot; + text + &quot;\n&quot; + text_all.Substring(endIndex);
+
+            StreamWriter streamWriter = new StreamWriter(filePath);
+            streamWriter.Write(text_all);
+            streamWriter.Close();
+        }
+
+        public void Replace(string below, string newText)
+        {
+            StreamReader streamReader = new StreamReader(filePath);
+            string text_all = streamReader.ReadToEnd();
+            streamReader.Close();
+
+            int beginIndex = text_all.IndexOf(below);
+            if (beginIndex == -1)
+            {
+                Debug.LogError(filePath + &quot;中没有找到标致&quot; + below);
+                return;
+            }
+
+            text_all = text_all.Replace(below, newText);
+            StreamWriter streamWriter = new StreamWriter(filePath);
+            streamWriter.Write(text_all);
+            streamWriter.Close();
+
+        }
+
+        public void Dispose()
+        {
+
+        }
+    }
+}
+</code></pre><h2 id="-">导出添加接入代码</h2>
+<pre><code>using System.Collections;
+using System.Collections.Generic;
+using UnityEngine;
+using UnityEditor;
+using UnityEditor.Callbacks;
+using UnityEditor.iOS.Xcode;
+using System.IO;
+using System;
+using UnityEditor.XCodeEditor;
+
+public class ZPXCodePostProcess
+{
+#if UNITY_EDITOR
+    [PostProcessBuild(1000)]
+    public static void OnPostProcessBuild(BuildTarget target, string pathToBuiltProject)
+    {
+        if (target != BuildTarget.iOS) return;
+        //得到xcode工程的路径
+        string path = Path.GetFullPath (pathToBuiltProject);
+        //编辑代码文件
+        EditorCode(path);
+    }
+    private static void EditorCode(string filePath)
+    {
+        //读取UnityAppController.mm文件
+        XClass UnityAppController = new XClass(filePath + &quot;/Classes/UnityAppController.mm&quot;);
+
+        //在指定代码后面增加一行代码
+        UnityAppController.WriteBelow(&quot;#include \&quot;PluginBase/AppDelegateListener.h\&quot;&quot;,&quot;#import \&quot;IOSLoader.h\&quot;&quot;);
+
+        //在指定代码后面增加一行代码
+        UnityAppController.WriteBelow(&quot;AppController_SendNotificationWithArg(kUnityWillFinishLaunchingWithOptions, launchOptions);&quot;,&quot;\r\t [IOSLoader splashReport];&quot;);
+        UnityAppController.WriteBelow(&quot;AppController_SendNotificationWithArg(kUnityOnOpenURL, notifData);&quot;,&quot;\r\t return [IOSLoader application:app openURL:url options:options];&quot;);
+
+        UnityAppController.WriteBelow(&quot;UnityInitApplicationNoGraphics([[[NSBundle mainBundle] bundlePath] UTF8String]);&quot;,&quot;\r\t [IOSLoader application:application DidFinishLaunchingWithOptions:launchOptions];&quot;);
+
+        UnityAppController.WriteBelow(&quot;- (void)applicationDidEnterBackground:(UIApplication*)application\n{&quot;,&quot;\r\t [IOSLoader applicationDidEnterBackground:application];&quot;);
+        UnityAppController.WriteBelow(&quot;- (void)applicationWillEnterForeground:(UIApplication*)application\n{&quot;,&quot;\r\t [IOSLoader applicationWillEnterForeground:application];&quot;);
+        UnityAppController.WriteBelow(&quot;- (void)applicationDidBecomeActive:(UIApplication*)application\n{&quot;,&quot;\r\t [IOSLoader applicationDidBecomeActive:application];&quot;);
+
+        UnityAppController.WriteBelow(&quot; SensorsCleanup();\n}&quot;,&quot;- (BOOL)application:(UIApplication *)application continueUserActivity:(NSUserActivity *)userActivity restorationHandler:(void (^)(NSArray&lt;id&lt;UIUserActivityRestoring&gt;&gt; * _Nullable))restorationHandler \r{\r\t  return [IOSLoader application:application continueUserActivity:userActivity restorationHandler:restorationHandler];\r}&quot;);
+
+    }
+#endif
+
+}
+</code></pre><h2 id="-">参考</h2>
+<p><a href="http://www.xuanyusong.com/archives/2720">Unity3D研究院之IOS全自动编辑framework、plist、oc代码（六十七）</a></p>
+
+          	</article>
+        </div>
+		</div>
+  </body>
+</html>
+<script type="text/javascript" src="toc/js/jquery-1.4.4.min.js"></script>
+<script type="text/javascript" src="toc/js/jquery.ztree.all-3.5.min.js"></script>
+<script type="text/javascript" src="toc/js/ztree_toc.js"></script>
+<script type="text/javascript" src="toc_conf.js"></script>
+
+<SCRIPT type="text/javascript" >
+<!--
+$(document).ready(function(){
+    var css_conf = eval(markdown_panel_style);
+    $('#readme').css(css_conf)
+    
+    var conf = eval(jquery_ztree_toc_opts);
+		$('#tree').ztree_toc(conf);
+});
+//-->
+</SCRIPT>
